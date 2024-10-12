@@ -4,6 +4,14 @@ aissemble-pipeline-invocation-chart:
     image:
       imagePullPolicy: IfNotPresent
     service:
-      type: LoadBalancer
+      type: NodePort
+      ports:
+        - name: "invocation-rest"
+          port: 8080
+          targetPort: 8080
+          nodePort: 30004
+        - name: "quarkus-managed"
+          port: 9001
+          targetPort: 9000
     ingress:
       enabled: false

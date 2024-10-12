@@ -51,7 +51,7 @@ yaml = helm(
    values=['test-403-deploy/src/main/resources/apps/spark-operator/values.yaml',
        'test-403-deploy/src/main/resources/apps/spark-operator/values-dev.yaml']
 )
-k8s_yaml(yaml)
+k8s_yaml(yaml, allow_duplicates=True)
 
 k8s_kind('SparkApplication', image_json_path='{.spec.image}')
 
