@@ -1,1 +1,7 @@
-# Add CI specific values here
+aissemble-policy-decision-point-chart:
+  image:
+    imagePullPolicy: IfNotPresent
+    dockerRepo: ""
+  service:
+    spec:
+      type: LoadBalancer# Add CI specific values here

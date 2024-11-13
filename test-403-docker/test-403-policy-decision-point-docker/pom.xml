@@ -55,6 +55,14 @@
             <plugin>
                 <groupId>${group.fabric8.plugin}</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
+                <configuration>
+                    <skip>false</skip>
+                    <images>
+                        <image>
+                            <name>test-403-policy-decision-point-docker</name>
+                        </image>
+                    </images>
+                </configuration>
             </plugin>
         </plugins>
     </build>
