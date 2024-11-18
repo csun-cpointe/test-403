@@ -1,0 +1,107 @@
+allow_k8s_contexts('local')
+load('ext://helm_resource', 'helm_resource')
+docker_prune_settings(num_builds=1, keep_recent=1)
+
+aissemble_version = '1.10.0-SNAPSHOT'
+
+build_args = { 'DOCKER_BASELINE_REPO_ID': 'ghcr.io/',
+               'VERSION_AISSEMBLE': aissemble_version}
+
+# Kafka
+helm_resource(
+    resource_deps=['configuration-store'],
+    name='kafka-cluster',
+    chart='test-403-deploy/src/main/resources/apps/kafka-cluster',
+    flags=['--values=test-403-deploy/src/main/resources/apps/kafka-cluster/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/kafka-cluster/values-dev.yaml']
+)
+
+helm_resource(
+    resource_deps=['configuration-store'],
+    name='spark-infrastructure',
+    chart='test-403-deploy/src/main/resources/apps/spark-infrastructure',
+    flags=['--values=test-403-deploy/src/main/resources/apps/spark-infrastructure/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/spark-infrastructure/values-dev.yaml']
+)
+k8s_yaml('test-403-deploy/src/main/resources/apps/spark-worker-image/spark-worker-image.yaml')
+
+helm_resource(
+    resource_deps=['configuration-store'],
+    name='policy-decision-point',
+    chart='test-403-deploy/src/main/resources/apps/policy-decision-point',
+    flags=['--values=test-403-deploy/src/main/resources/apps/policy-decision-point/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/policy-decision-point/values-dev.yaml']
+)
+
+helm_resource(
+    resource_deps=['configuration-store'],
+    name='pipeline-invocation-service',
+    chart='test-403-deploy/src/main/resources/apps/pipeline-invocation-service',
+    flags=['--values=test-403-deploy/src/main/resources/apps/pipeline-invocation-service/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/pipeline-invocation-service/values-dev.yaml']
+)
+
+helm_resource(
+    resource_deps=['configuration-store'],
+    name='s3-local',
+    chart='test-403-deploy/src/main/resources/apps/s3-local',
+    flags=['--values=test-403-deploy/src/main/resources/apps/s3-local/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/s3-local/values-dev.yaml']
+)
+
+helm_resource(
+    resource_deps=['configuration-store'],
+    name='spark-operator',
+    chart='test-403-deploy/src/main/resources/apps/spark-operator',
+    flags=['--values=test-403-deploy/src/main/resources/apps/spark-operator/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/spark-operator/values-dev.yaml']
+)
+
+k8s_kind('SparkApplication', image_json_path='{.spec.image}')
+
+
+yaml = local('helm template oci://ghcr.io/boozallen/aissemble-spark-application-chart --version %s --values test-403-pipelines/spark-pipeline/src/main/resources/apps/spark-pipeline-base-values.yaml,test-403-pipelines/spark-pipeline/src/main/resources/apps/spark-pipeline-dev-values.yaml' % aissemble_version)
+k8s_yaml(yaml)
+k8s_resource('spark-pipeline', port_forwards=[port_forward(4747, 4747, 'debug')], auto_init=False, trigger_mode=TRIGGER_MODE_MANUAL)
+
+# pyspark-pipeline-compiler
+local_resource(
+    name='compile-pyspark-pipeline',
+    cmd='cd test-403-pipelines/pyspark-pipeline && poetry run behave tests/features && poetry build && cd - && \
+    cp -r test-403-pipelines/pyspark-pipeline/dist/* test-403-docker/test-403-spark-worker-docker/target/dockerbuild/pyspark-pipeline && \
+    cp test-403-pipelines/pyspark-pipeline/dist/requirements.txt test-403-docker/test-403-spark-worker-docker/target/dockerbuild/requirements/pyspark-pipeline',
+    deps=['test-403-pipelines/pyspark-pipeline'],
+    auto_init=False,
+    ignore=['**/dist/'])
+# Add deployment resources here
+
+# For WSL users, the configuration files need to be in an accessible path. Update the project path to the root file system. Example: '/mnt/c' or '/mnt/wsl/rancher-desktop'
+project_path = os.path.abspath('.')
+# Update configuration_files_path to match the path of the config files to be loaded into the configuration store. Example 'my-project-deploy/src/main/resources/config'
+configuration_files_path = 'src/main/resources/configurations'
+
+
+helm_resource(
+    name='configuration-store',
+    chart='test-403-deploy/src/main/resources/apps/configuration-store',
+    namespace='config-store-ns',
+    flags=['--values=test-403-deploy/src/main/resources/apps/configuration-store/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/configuration-store/values-dev.yaml',
+           '--set=aissemble-configuration-store-chart.configurationVolume.volumePathOnNode=' + project_path + '/' + configuration_files_path,
+           '--create-namespace']
+)
+
+helm_resource(
+    name='hive-metastore-db-old',
+    chart='test-403-deploy/src/main/resources/apps/hive-metastore-db-old',
+    flags=['--values=test-403-deploy/src/main/resources/apps/hive-metastore-db-old/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/hive-metastore-db-old/values-dev.yaml']
+)
+
+helm_resource(
+    resource_deps=['hive-metastore-db-old','configuration-store'],
+    chart='test-403-deploy/src/main/resources/apps/hive-metastore-service-old',
+    name='hive-metastore-service-old',
+    flags=['--values=test-403-deploy/src/main/resources/apps/hive-metastore-service-old/values.yaml',
+           '--values=test-403-deploy/src/main/resources/apps/hive-metastore-service-old/values-dev.yaml']
+)

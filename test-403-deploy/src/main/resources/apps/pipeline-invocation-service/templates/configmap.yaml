@@ -6,6 +6,8 @@
 {{- include "filegather.configmap" (list . "invocationservice.configmap") -}}
 {{- define "invocationservice.configmap" -}}
 metadata:
+  labels:
+    aissemble-configuration-store: enabled
   name: spark-application-values-files
 data: {}
 {{- end -}}
