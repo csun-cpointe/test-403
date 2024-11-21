@@ -6,4 +6,4 @@ aissemble-kafka-chart:
     resources:
       limits:
         memory: 2G
-    autoCreateTopicsEnable: true # Enable auto creation of topics
+    autoCreateTopicsEnable: false # Enable auto creation of topics
