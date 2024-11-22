@@ -1,6 +1,7 @@
 spec:
   destination:
     server: https://kubernetes.default.svc
+    namespace: default
   targetRevision: main
   repo: https://github.com/csun-cpointe/test-403
   helm:
