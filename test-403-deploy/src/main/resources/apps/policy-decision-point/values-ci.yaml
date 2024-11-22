@@ -4,4 +4,11 @@ aissemble-policy-decision-point-chart:
     dockerRepo: ""
   service:
     spec:
-      type: LoadBalancer# Add CI specific values here
+      type: LoadBalancer
+      ports:
+        - name: rest-api
+          port: 8080
+          targetPort: 8080
+      selector:
+        app.kubernetes.io/instance: policy-decision-point
+        app.kubernetes.io/name: policy-decision-point
