@@ -1,5 +1,6 @@
 metadata:
     name: spark-pipeline
+    namespace: argocd
 sparkApp:
   spec:
     type: Java
