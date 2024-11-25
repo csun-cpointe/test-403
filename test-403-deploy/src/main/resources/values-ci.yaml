@@ -1,13 +1,4 @@
 metadata:
-  annotations:
-    argocd-image-updater.argoproj.io/image-list: pdp=test-403-policy-decision-point-docker
-    argocd-image-updater.argoproj.io/pdp.image-name: test-403-policy-decision-point-docker
-    argocd-image-updater.argoproj.io/pdp.image-tag: latest
-    argocd-image-updater.argoproj.io/pdp.update-strategy: newest-build
-    #argocd-image-updater.argoproj.io/nginx.ignore-tags: latest, master
-    argocd-image-updater.argoproj.io/git-branch: main
-    #argocd-image-updater.argoproj.io/write-back-method: git
-    #argocd-image-updater.argoproj.io/write-back-target: kustomization
 spec:
   destination:
     namespace: argocd
